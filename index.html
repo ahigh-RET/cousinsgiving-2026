@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cousinsgiving 2026 — RSVP &amp; Potluck Dish Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #fdf8f3;
+      --surface: #ffffff;
+      --surface-warm: #f7efe6;
+      --border: #ead9c8;
+      --text: #2c1e16;
+      --muted: #6e5849;
+      --primary: #b84a27;
+      --primary-hover: #993b1d;
+      --accent: #d9822b;
+      --sage: #3b6e52;
+      --sage-bg: #e7f3ec;
+      --amber: #9a5b13;
+      --amber-bg: #fef3c7;
+      --red: #9f2d2d;
+      --red-bg: #fee2e2;
+      --shadow: 0 10px 28px rgba(44, 30, 22, 0.07);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #5c2618 0%, #9b3d20 55%, #c76b28 100%);
+      color: #fffaf5;
+      padding: 2.5rem 1.25rem 3.25rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: rgba(255, 250, 245, 0.16);
+      border: 1px solid rgba(255, 250, 245, 0.28);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.85rem;
+    }
+    .hero h1 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(2rem, 4.5vw, 3rem);
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .hero p {
+      margin: 0 auto;
+      max-width: 600px;
+      font-size: 1.02rem;
+      opacity: 0.93;
+    }
+    .sync-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.22);
+      font-size: 0.8rem;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+    .dot.syncing { background: #facc15; animation: pulse 1s infinite; }
+    .dot.error { background: #f87171; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+    .container {
+      max-width: 1120px;
+      margin: -1.75rem auto 3.5rem;
+      padding: 0 1.25rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem 1.35rem;
+      box-shadow: var(--shadow);
+    }
+    .stat-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .stat-value {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 2.15rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0.15rem 0;
+    }
+    .stat-sub {
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+    .card h2 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 1.35rem;
+      margin: 0 0 0.35rem;
+    }
+    .card-desc {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin: 0 0 1.15rem;
+    }
+
+    .form-group { margin-bottom: 0.95rem; }
+    label {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      color: var(--text);
+    }
+    input, select {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font: inherit;
+      font-size: 0.94rem;
+      background: #fffdfb;
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(184, 74, 39, 0.14);
+    }
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.72rem 1.15rem;
+      border-radius: 10px;
+      border: none;
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.94rem;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.05s;
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-ghost {
+      background: var(--surface-warm);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.42rem 0.75rem;
+      font-size: 0.82rem;
+    }
+    .btn-ghost:hover { background: #efe2d3; }
+    .btn-danger {
+      background: #fff1f1;
+      color: var(--red);
+      border: 1px solid #fecaca;
+      padding: 0.42rem 0.75rem;
+      font-size: 0.82rem;
+    }
+    .btn-danger:hover { background: #fee2e2; }
+
+    .cat-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+    }
+    .cat-pill {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-warm);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .cat-count {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.1rem 0.55rem;
+      font-size: 0.8rem;
+      color: var(--primary);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-bottom: 1.1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .toolbar-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      flex: 1;
+    }
+    .toolbar input { max-width: 240px; }
+    .toolbar select { max-width: 175px; }
+
+    .entry-list { display: flex; flex-direction: column; gap: 0.85rem; }
+    .entry-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.15rem;
+      background: #fffdfb;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .entry-top {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.3rem;
+    }
+    .entry-name { font-weight: 700; font-size: 1.05rem; }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+    }
+    .badge-party { background: var(--surface-warm); color: var(--text); border: 1px solid var(--border); }
+    .badge-cat { background: #f3e8ff; color: #6b21a8; }
+    .badge-confirmed { background: var(--sage-bg); color: var(--sage); }
+    .badge-maybe { background: var(--amber-bg); color: var(--amber); }
+    .badge-no { background: var(--red-bg); color: var(--red); }
+
+    .entry-dish { font-size: 0.96rem; font-weight: 600; color: var(--text); }
+    .entry-notes { font-size: 0.84rem; color: var(--muted); margin-top: 0.2rem; }
+    .entry-actions { display: flex; gap: 0.45rem; }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--muted);
+      background: var(--surface-warm);
+      border-radius: 12px;
+      border: 1px dashed var(--border);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(28, 18, 12, 0.52);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 50;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      max-width: 460px;
+      width: 100%;
+      padding: 1.5rem;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.22);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .modal-header h3 { font-family: 'Fraunces', Georgia, serif; margin: 0; font-size: 1.3rem; }
+    .modal-actions { display: flex; gap: 0.65rem; justify-content: flex-end; margin-top: 1.15rem; }
+
+    .toast {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      background: #2c1e16;
+      color: #fff;
+      padding: 0.75rem 1.1rem;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: all 0.2s;
+      z-index: 60;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="hero-badge">🦃 Saturday, November 28, 2026 • 3:00 PM</div>
+    <h1>Cousinsgiving 2026</h1>
+    <p>Hosted by Ashley • Add your RSVP, guest count, and potluck dish below—and update your entry anytime if your plans change.</p>
+    <div class="sync-bar">
+      <span class="dot" id="syncDot"></span>
+      <span id="syncText">Connecting to family sheet...</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Attendees</div>
+        <div class="stat-value" id="statAttendees">0</div>
+        <div class="stat-sub">Confirmed &amp; maybe guests</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Confirmed Parties</div>
+        <div class="stat-value" id="statConfirmed">0</div>
+        <div class="stat-sub">Families locked in</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Dishes Signed Up</div>
+        <div class="stat-value" id="statDishes">0</div>
+        <div class="stat-sub">Potluck items claimed</div>
+      </div>
+    </section>
+
+    <div class="main-grid">
+      <!-- Left Column: Form + Category Breakdown -->
+      <div>
+        <section class="card">
+          <h2>Add Your RSVP &amp; Dish</h2>
+          <p class="card-desc">Everyone can see what's claimed so we don't end up with five pumpkin pies.</p>
+          <form id="addForm">
+            <div class="form-group">
+              <label for="firstName">First Name *</label>
+              <input type="text" id="firstName" placeholder="e.g., Jordan" required />
+            </div>
+
+            <div class="row-2">
+              <div class="form-group">
+                <label for="extraGuests">Extra Guests</label>
+                <input type="number" id="extraGuests" min="0" max="20" value="0" required />
+              </div>
+              <div class="form-group">
+                <label for="rsvpStatus">Status</label>
+                <select id="rsvpStatus">
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Maybe">Maybe</option>
+                  <option value="Can't Make It">Can't Make It</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="dishCategory">Dish Category</label>
+              <select id="dishCategory">
+                <option value="Main Dish">Main Dish</option>
+                <option value="Side Dish">Side Dish</option>
+                <option value="Appetizer">Appetizer</option>
+                <option value="Dessert">Dessert</option>
+                <option value="Drinks">Drinks</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="dishName">What Dish Are You Bringing? *</label>
+              <input type="text" id="dishName" placeholder="e.g., Baked Mac &amp; Cheese" required />
+            </div>
+
+            <div class="form-group">
+              <label for="dietaryNotes">Dietary Notes / Allergens (Optional)</label>
+              <input type="text" id="dietaryNotes" placeholder="e.g., Gluten-free, contains pecans" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submitBtn">Save RSVP &amp; Dish</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Menu Breakdown</h2>
+          <p class="card-desc">See what categories are covered or still needed.</p>
+          <div class="cat-list" id="categoryBreakdown"></div>
+        </section>
+      </div>
+
+      <!-- Right Column: Live Guest & Dish List -->
+      <section class="card">
+        <div class="toolbar">
+          <div>
+            <h2 style="margin:0;">Who's Coming &amp; What's Cooking</h2>
+          </div>
+          <button type="button" class="btn btn-ghost" id="refreshBtn">↻ Refresh List</button>
+        </div>
+
+        <div class="toolbar-filters" style="margin-bottom: 1.1rem;">
+          <input type="search" id="searchInput" placeholder="Search name or dish..." />
+          <select id="filterCategory">
+            <option value="ALL">All Categories</option>
+            <option value="Main Dish">Main Dish</option>
+            <option value="Side Dish">Side Dish</option>
+            <option value="Appetizer">Appetizer</option>
+            <option value="Dessert">Dessert</option>
+            <option value="Drinks">Drinks</option>
+            <option value="Other">Other</option>
+          </select>
+          <select id="filterStatus">
+            <option value="ALL">All Statuses</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Maybe">Maybe</option>
+            <option value="Can't Make It">Can't Make It</option>
+          </select>
+        </div>
+
+        <div class="entry-list" id="entryList">
+          <div class="empty-state">Loading family RSVPs...</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Edit Modal -->
+  <div class="modal-backdrop" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Your RSVP or Dish</h3>
+        <button type="button" class="btn btn-ghost" id="closeModalBtn">✕</button>
+      </div>
+      <form id="editForm">
+        <input type="hidden" id="editRowNumber" />
+        <div class="form-group">
+          <label for="editName">First Name *</label>
+          <input type="text" id="editName" required />
+        </div>
+        <div class="row-2">
+          <div class="form-group">
+            <label for="editGuests">Extra Guests</label>
+            <input type="number" id="editGuests" min="0" max="20" required />
+          </div>
+          <div class="form-group">
+            <label for="editStatus">Status</label>
+            <select id="editStatus">
+              <option value="Confirmed">Confirmed</option>
+              <option value="Maybe">Maybe</option>
+              <option value="Can't Make It">Can't Make It</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="editCategory">Dish Category</label>
+          <select id="editCategory">
+            <option value="Main Dish">Main Dish</option>
+            <option value="Side Dish">Side Dish</option>
+            <option value="Appetizer">Appetizer</option>
+            <option value="Dessert">Dessert</option>
+            <option value="Drinks">Drinks</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editDish">Dish Name *</label>
+          <input type="text" id="editDish" required />
+        </div>
+        <div class="form-group">
+          <label for="editNotes">Dietary Notes / Allergens</label>
+          <input type="text" id="editNotes" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="cancelEditBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="width:auto;" id="saveEditBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW:
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8Bu5gh_ZThcR_i3XsL3EL8G5rfXLZiNP4jf1FqUFopTCA3AgkB76sSkrb8muk33Lzvw/exec';
+
+    const CATEGORIES = ['Main Dish', 'Side Dish', 'Appetizer', 'Dessert', 'Drinks', 'Other'];
+    let entries = [];
+
+    const syncDot = document.getElementById('syncDot');
+    const syncText = document.getElementById('syncText');
+    const toastEl = document.getElementById('toast');
+
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      setTimeout(() => toastEl.classList.remove('show'), 3000);
+    }
+
+    function setSyncState(state, text) {
+      syncDot.className = 'dot' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
+      syncText.textContent = text;
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    async function loadEntries(silent = false) {
+      if (!SCRIPT_URL || SCRIPT_URL.includes('PASTE_YOUR_WEB_APP_URL')) {
+        setSyncState('error', 'Setup needed: paste your Google Apps Script URL in index.html');
+        document.getElementById('entryList').innerHTML =
+          '<div class="empty-state">Paste your Google Apps Script Web App URL into <code>SCRIPT_URL</code> in <code>index.html</code> to connect your live Google Sheet.</div>';
+        return;
+      }
+
+      if (!silent) setSyncState('syncing', 'Syncing with Google Sheet...');
+      try {
+        const res = await fetch(SCRIPT_URL);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Failed to load');
+        entries = data.entries || [];
+        renderAll();
+        const now = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        setSyncState('ok', `Live synced with Google Sheet • Updated ${now}`);
+      } catch (err) {
+        console.error(err);
+        setSyncState('error', 'Could not reach Google Sheet');
+      }
+    }
+
+    async function sendMutation(payload) {
+      setSyncState('syncing', 'Saving to Google Sheet...');
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Save failed');
+      await loadEntries(true);
+    }
+
+    function renderAll() {
+      renderStats();
+      renderCategories();
+      renderList();
+    }
+
+    function renderStats() {
+      const attending = entries.filter(e => e.status !== "Can't Make It");
+      const totalPeople = attending.reduce((sum, e) => sum + 1 + (Number(e.guests) || 0), 0);
+      const confirmedCount = entries.filter(e => e.status === 'Confirmed').length;
+      const dishCount = attending.filter(e => e.dish && e.dish.trim()).length;
+
+      document.getElementById('statAttendees').textContent = totalPeople;
+      document.getElementById('statConfirmed').textContent = confirmedCount;
+      document.getElementById('statDishes').textContent = dishCount;
+    }
+
+    function renderCategories() {
+      const container = document.getElementById('categoryBreakdown');
+      const active = entries.filter(e => e.status !== "Can't Make It" && e.dish);
+      container.innerHTML = CATEGORIES.map(cat => {
+        const count = active.filter(e => e.category === cat).length;
+        return `<div class="cat-pill"><span>${escapeHtml(cat)}</span><span class="cat-count">${count}</span></div>`;
+      }).join('');
+    }
+
+    function renderList() {
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+      const catFilter = document.getElementById('filterCategory').value;
+      const statusFilter = document.getElementById('filterStatus').value;
+
+      const filtered = entries.filter(e => {
+        const matchesSearch = !search ||
+          e.name.toLowerCase().includes(search) ||
+          e.dish.toLowerCase().includes(search) ||
+          (e.notes && e.notes.toLowerCase().includes(search));
+        const matchesCat = catFilter === 'ALL' || e.category === catFilter;
+        const matchesStatus = statusFilter === 'ALL' || e.status === statusFilter;
+        return matchesSearch && matchesCat && matchesStatus;
+      });
+
+      const listEl = document.getElementById('entryList');
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No matching RSVPs yet. Be the first to add your dish!</div>';
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(e => {
+        const partySize = 1 + (Number(e.guests) || 0);
+        const partyLabel = partySize === 1 ? '1 person' : `${partySize} people (+${e.guests})`;
+        const statusClass = e.status === 'Confirmed' ? 'badge-confirmed'
+          : e.status === 'Maybe' ? 'badge-maybe' : 'badge-no';
+
+        return `
+          <article class="entry-card">
+            <div>
+              <div class="entry-top">
+                <span class="entry-name">${escapeHtml(e.name)}</span>
+                <span class="badge badge-party">${escapeHtml(partyLabel)}</span>
+                <span class="badge badge-cat">${escapeHtml(e.category)}</span>
+                <span class="badge ${statusClass}">${escapeHtml(e.status)}</span>
+              </div>
+              <div class="entry-dish">🍽️ ${escapeHtml(e.dish || 'No dish listed yet')}</div>
+              ${e.notes ? `<div class="entry-notes">Note: ${escapeHtml(e.notes)}</div>` : ''}
+            </div>
+            <div class="entry-actions">
+              <button type="button" class="btn btn-ghost" onclick="openEdit(${e.rowNumber})">Edit</button>
+              <button type="button" class="btn btn-danger" onclick="deleteEntry(${e.rowNumber}, '${escapeHtml(e.name)}')">Remove</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    // Add entry
+    document.getElementById('addForm').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      const entry = {
+        name: document.getElementById('firstName').value.trim(),
+        guests: Number(document.getElementById('extraGuests').value) || 0,
+        status: document.getElementById('rsvpStatus').value,
+        category: document.getElementById('dishCategory').value,
+        dish: document.getElementById('dishName').value.trim(),
+        notes: document.getElementById('dietaryNotes').value.trim()
+      };
+
+      try {
+        await sendMutation({ action: 'add', entry });
+        ev.target.reset();
+        document.getElementById('extraGuests').value = 0;
+        showToast('Saved! Your RSVP & dish are now on the sheet.');
+      } catch (err) {
+        alert('Error saving entry: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save RSVP & Dish';
+      }
+    });
+
+    // Open edit modal
+    window.openEdit = function(rowNumber) {
+      const item = entries.find(e => e.rowNumber === rowNumber);
+      if (!item) return;
+      document.getElementById('editRowNumber').value = item.rowNumber;
+      document.getElementById('editName').value = item.name;
+      document.getElementById('editGuests').value = item.guests;
+      document.getElementById('editStatus').value = item.status;
+      document.getElementById('editCategory').value = CATEGORIES.includes(item.category) ? item.category : 'Other';
+      document.getElementById('editDish').value = item.dish;
+      document.getElementById('editNotes').value = item.notes || '';
+      document.getElementById('editModal').classList.add('open');
+    };
+
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('open');
+    }
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('cancelEditBtn').addEventListener('click', closeModal);
+
+    // Save edit
+    document.getElementById('editForm').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const btn = document.getElementById('saveEditBtn');
+      btn.disabled = true;
+      btn.textContent = 'Updating...';
+
+      const rowNumber = Number(document.getElementById('editRowNumber').value);
+      const entry = {
+        name: document.getElementById('editName').value.trim(),
+        guests: Number(document.getElementById('editGuests').value) || 0,
+        status: document.getElementById('editStatus').value,
+        category: document.getElementById('editCategory').value,
+        dish: document.getElementById('editDish').value.trim(),
+        notes: document.getElementById('editNotes').value.trim()
+      };
+
+      try {
+        await sendMutation({ action: 'update', rowNumber, entry });
+        closeModal();
+        showToast('Updated! Everyone will see your changes.');
+      } catch (err) {
+        alert('Error updating entry: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+    });
+
+    // Delete entry
+    window.deleteEntry = async function(rowNumber, name) {
+      if (!confirm(`Remove ${name}'s RSVP and dish from the list?`)) return;
+      try {
+        await sendMutation({ action: 'delete', rowNumber });
+        showToast('Entry removed.');
+      } catch (err) {
+        alert('Error removing entry: ' + err.message);
+      }
+    };
+
+    // Filters & manual refresh
+    document.getElementById('searchInput').addEventListener('input', renderList);
+    document.getElementById('filterCategory').addEventListener('change', renderList);
+    document.getElementById('filterStatus').addEventListener('change', renderList);
+    document.getElementById('refreshBtn').addEventListener('click', () => loadEntries(false));
+
+    // Initial load + background poll every 30 seconds
+    loadEntries(false);
+    setInterval(() => loadEntries(true), 30000);
+  </script>
+</body>
+</html>
